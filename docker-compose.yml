@@ -1,0 +1,27 @@
+services:
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    restart: always
+
+  socket-server:
+    build: .
+    container_name: socket-server
+    ports:
+      - '3000:3000'
+    restart: always
+    environment:
+      - PORT=3000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - USE_REDIS_ADAPTER=${USE_REDIS_ADAPTER}
+    depends_on:
+      - redis
+
+volumes:
+  redis_data:
