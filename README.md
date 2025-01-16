@@ -3,7 +3,7 @@
 ## Table of Contents
 
 - [Introduction](#introduction)
-- [What's the problem of Multi-Instance Socket.IO ?](#what-is-the-problem-of-multi-instance-socket-server)
+- [What is the problem of Multi Instance Socket Server?](#what-is-the-problem-of-multi-instance-socket-server)
 - [How It Works](#how-it-works)
   - [Redis Adapter Solution](#redis-adapter-solution)
   - [Message Flow with Redis Adapter](#message-flow-with-redis-adapter)
@@ -24,6 +24,8 @@
 
 This guide explains how to build a scalable Socket.IO server that can run multiple instances while maintaining real-time communication between all connected clients. We'll use Redis as a message broker to ensure all subscribers receive messages regardless of which server instance they're connected to.
 
+[⬆ Back to top](#table-of-contents)
+
 ## What is the problem of Multi Instance Socket Server ?
 
 When running Socket.IO in a multi-instance environment, we face a challenge: messages sent to one instance don't automatically reach clients connected to other instances. Here's why:
@@ -42,6 +44,8 @@ Redis Adapter solves this by:
 - Acting as a central message broker
 - Ensuring all instances receive all messages
 - Maintaining real-time communication across all instances
+
+[⬆ Back to top](#table-of-contents)
 
 ## How It Works
 
@@ -70,6 +74,8 @@ The Redis Adapter solves the multi-instance communication challenge through a pu
 - Real-time synchronization across all instances
 - Reliable message delivery in distributed environments
 - Built-in support for room and private messages
+
+[⬆ Back to top](#table-of-contents)
 
 ## Implementation Steps
 
@@ -107,6 +113,8 @@ const io = new Server(httpServer, {
 });
 ```
 
+[⬆ Back to top](#table-of-contents)
+
 ## Running the Project
 
 1. Clone the repository
@@ -142,6 +150,10 @@ const io = new Server(httpServer, {
    docker compose down
    ```
 
+6. Test the application by opening multiple browser windows and sending messages
+
+[⬆ Back to top](#table-of-contents)
+
 ## Testing without Redis Adapter
 
 1. Disable Redis Adapter in `.env`:
@@ -152,6 +164,10 @@ const io = new Server(httpServer, {
 3. Go to Browser
 
 ![Testing without Redis Adapter](./images/adapter-disabled.gif)
+
+This demonstrates the limitation of running Socket.IO instances without a message broker.
+
+[⬆ Back to top](#table-of-contents)
 
 ## Testing with Redis Adapter
 
@@ -164,15 +180,25 @@ const io = new Server(httpServer, {
 
 ![Testing with Redis Adapter](./images/adapter-enabled.gif)
 
+This demonstrates how Redis Adapter enables seamless communication across multiple Socket.IO instances.
+
+[⬆ Back to top](#table-of-contents)
+
 ## Conclusion
 
 Using Redis Adapter with Socket.IO is essential for building scalable real-time applications that run on multiple instances. It ensures consistent message delivery across all instances and provides a robust foundation for handling large numbers of concurrent connections.
+
+The Redis Adapter provides an elegant solution for scaling Socket.IO applications across multiple instances.
+
+[⬆ Back to top](#table-of-contents)
 
 ## Resources
 
 - [Socket.IO Documentation](https://socket.io/docs/v4)
 - [Socket.IO Redis Adapter](https://socket.io/docs/v4/redis-adapter)
 - [Redis Documentation](https://redis.io/documentation)
+
+[⬆ Back to top](#table-of-contents)
 
 ## Project Structure
 
@@ -194,12 +220,16 @@ socket-article/
 ├── README.md
 ```
 
+[⬆ Back to top](#table-of-contents)
+
 ## Technology Stack
 
 - **Node.js & TypeScript**: For server-side development
 - **Socket.IO**: For real-time communication
 - **Redis**: As message broker
 - **Docker & Docker Compose**: For containerization and orchestration
+
+[⬆ Back to top](#table-of-contents)
 
 ## License
 
