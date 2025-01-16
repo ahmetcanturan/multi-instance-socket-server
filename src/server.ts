@@ -20,6 +20,10 @@ const subClient = pubClient.duplicate();
 
 const io = new Server(httpServer, {
   adapter: useRedisAdapter ? createAdapter(pubClient, subClient) : undefined,
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
 });
 
 app.use(express.static(path.join(__dirname, "..")));
@@ -35,28 +39,29 @@ app.get("/redis-status", (req, res) => {
   res.json({ useRedis: useRedisAdapter });
 });
 
-// Common message
-app.post("/common-message", (req, res) => {
-  try {
-    const message = req.body.message;
-    console.log("Admin message received:", message);
-    io.emit("message", {
-      message,
-    });
-    return res.status(200).send("Message sent successfully");
-  } catch (error) {
-    console.error("Error sending message:", error);
-    return res.status(500).send("Failed to send message");
-  }
-});
-
 // Socket.IO connection handling
 io.on("connection", (socket) => {
   const clientId = socket.id.substring(0, 6);
-  console.log(`Client connected: ${clientId}`);
-  socket.on("message", (data) => {
-    console.log(`Admin message received from ${clientId}:`, data);
+  console.log(`New connection from ${clientId}`);
+
+  // Handle broadcaster registration
+  socket.on("register-as-broadcaster", () => {
+    console.log(`Registering broadcaster: ${clientId}`);
+    socket.join("broadcasters");
+    socket.emit("registration-success");
   });
+
+  // Handle messages
+  socket.on("message", (data) => {
+    console.log(`Message received from ${clientId}:`, data);
+    // Broadcast the message to all clients
+    io.emit("message", {
+      message: data.text,
+      senderId: clientId,
+      timestamp: new Date().toISOString(),
+    });
+  });
+
   socket.on("disconnect", () => {
     console.log(`Client disconnected: ${clientId}`);
   });
