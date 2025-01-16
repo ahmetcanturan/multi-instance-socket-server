@@ -26,7 +26,7 @@ This guide explains how to build a scalable Socket.IO server that can run multip
 
 [⬆ Back to top](#table-of-contents)
 
-## What is the problem of Multi Instance Socket Server ?
+## What is the problem of Multi Instance Socket Server?
 
 When running Socket.IO in a multi-instance environment, we face a challenge: messages sent to one instance don't automatically reach clients connected to other instances. Here's why:
 
