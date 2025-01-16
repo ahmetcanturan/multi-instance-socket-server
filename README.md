@@ -1,10 +1,30 @@
 # Building a Multi-Instance Socket.IO Server with Redis Adapter
 
+## Table of Contents
+
+- [Introduction](#introduction)
+- [What's the problem of Multi-Instance Socket.IO ?](#what-is-the-problem-of-multi-instance-socket-server)
+- [How It Works](#how-it-works)
+  - [Redis Adapter Solution](#redis-adapter-solution)
+  - [Message Flow with Redis Adapter](#message-flow-with-redis-adapter)
+  - [Key Benefits](#key-benefits)
+- [Implementation Steps](#implementation-steps)
+  - [1. Basic Socket.IO Server Setup](#1-basic-socketio-server-setup)
+  - [2. Redis Adapter Integration](#2-redis-adapter-integration)
+- [Running the Project](#running-the-project)
+- [Testing without Redis Adapter](#testing-without-redis-adapter)
+- [Testing with Redis Adapter](#testing-with-redis-adapter)
+- [Conclusion](#conclusion)
+- [Resources](#resources)
+- [Project Structure](#project-structure)
+- [Technology Stack](#technology-stack)
+- [License](#license)
+
 ## Introduction
 
 This guide explains how to build a scalable Socket.IO server that can run multiple instances while maintaining real-time communication between all connected clients. We'll use Redis as a message broker to ensure all subscribers receive messages regardless of which server instance they're connected to.
 
-## What's the problem of Multi-Instance Socket.IO ?
+## What is the problem of Multi Instance Socket Server ?
 
 When running Socket.IO in a multi-instance environment, we face a challenge: messages sent to one instance don't automatically reach clients connected to other instances. Here's why:
 
@@ -22,6 +42,34 @@ Redis Adapter solves this by:
 - Acting as a central message broker
 - Ensuring all instances receive all messages
 - Maintaining real-time communication across all instances
+
+## How It Works
+
+The Redis Adapter solves the multi-instance communication challenge through a pub/sub (publish/subscribe) messaging pattern. Here's how it works:
+
+![Redis Adapter Solution](./images/schema-adapter.png)
+
+### Redis Adapter Solution
+
+- Acts as a central message broker between Socket.IO instances
+- Implements pub/sub pattern for real-time message distribution
+- Maintains a shared state of all connected clients
+- Ensures message delivery to all clients regardless of their connected instance
+
+### Message Flow with Redis Adapter
+
+- When a message is emitted:
+  1.  The Socket.IO instance publishes the message to Redis
+  2.  Redis distributes the message to all subscribed Socket.IO instances
+  3.  Each instance then broadcasts to its connected clients
+- This creates a seamless communication layer across all instances
+
+### Key Benefits
+
+- Horizontal scalability: Add more Socket.IO instances without losing messages
+- Real-time synchronization across all instances
+- Reliable message delivery in distributed environments
+- Built-in support for room and private messages
 
 ## Implementation Steps
 
@@ -58,33 +106,6 @@ const io = new Server(httpServer, {
   adapter: useRedisAdapter ? createAdapter(pubClient, subClient) : undefined,
 });
 ```
-
-## How It Works
-
-The Redis Adapter solves the multi-instance communication challenge through a pub/sub (publish/subscribe) messaging pattern. Here's how it works:
-
-![Redis Adapter Solution](./images/schema-adapter.png)
-
-1. **Redis Adapter Solution**:
-
-   - Acts as a central message broker between Socket.IO instances
-   - Implements pub/sub pattern for real-time message distribution
-   - Maintains a shared state of all connected clients
-   - Ensures message delivery to all clients regardless of their connected instance
-
-2. **Message Flow with Redis Adapter**:
-
-   - When a message is emitted:
-     1. The Socket.IO instance publishes the message to Redis
-     2. Redis distributes the message to all subscribed Socket.IO instances
-     3. Each instance then broadcasts to its connected clients
-   - This creates a seamless communication layer across all instances
-
-3. **Key Benefits**:
-   - Horizontal scalability: Add more Socket.IO instances without losing messages
-   - Real-time synchronization across all instances
-   - Reliable message delivery in distributed environments
-   - Built-in support for room and private messages
 
 ## Running the Project
 
