@@ -182,21 +182,24 @@
   <body>
     <div class="section">
       <div class="admin-container">
-        <h2>Admin Panel</h2>
+        <h2>Message Broadcaster</h2>
         <div class="admin-info">
           <div class="redis-status-container">
-            Redis Adapter Status:
-            <span id="adminRedisStatus" class="status">Checking...</span>
+            <span>Connection Status:</span>
+            <span id="broadcaster-status" class="status disabled">Not Connected</span>
+          </div>
+          <div class="redis-status-container" style="margin-top: 8px;">
+            <span>Redis Adapter:</span>
+            <span id="redis-status" class="status disabled">Checking...</span>
           </div>
         </div>
         <div class="message-form">
           <input
             type="text"
             id="messageInput"
-            placeholder="Type a message to broadcast..."
-            autocomplete="off"
+            placeholder="Type your broadcast message..."
           />
-          <button onclick="sendMessage()">Send Message to Subscribers</button>
+          <button onclick="sendMessage()">Send</button>
         </div>
       </div>
     </div>
@@ -207,47 +210,102 @@
     </div>
 
     <script>
-      // Admin panel status info
-      const adminRedisStatus = document.getElementById("adminRedisStatus");
-
-      // Check Redis status on page load
+      // Check Redis status
       fetch("/redis-status")
         .then((response) => response.json())
         .then((data) => {
-          adminRedisStatus.textContent = data.useRedis ? "Enabled" : "Disabled";
-          adminRedisStatus.className = `status ${
-            data.useRedis ? "enabled" : "disabled"
-          }`;
+          const redisStatus = document.getElementById("redis-status");
+          if (data.useRedis) {
+            redisStatus.className = "status enabled";
+            redisStatus.textContent = "Enabled";
+          } else {
+            redisStatus.className = "status disabled";
+            redisStatus.textContent = "Disabled";
+          }
         })
         .catch((error) => {
-          adminRedisStatus.textContent = "Error";
-          adminRedisStatus.className = "status error";
           console.error("Error checking Redis status:", error);
+          const redisStatus = document.getElementById("redis-status");
+          redisStatus.className = "status error";
+          redisStatus.textContent = "Error";
         });
 
-      async function sendMessage() {
+      // Broadcaster setup
+      const broadcasterSocket = io({
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        timeout: 20000,
+        transports: ['websocket', 'polling']
+      });
+      
+      let isBroadcasterConnected = false;
+
+      broadcasterSocket.on("connect", () => {
+        console.log("Socket connected, registering as broadcaster...");
+        updateBroadcasterStatus("Registering...", "disabled");
+        broadcasterSocket.emit("register-as-broadcaster");
+      });
+
+      broadcasterSocket.on("registration-success", () => {
+        console.log("Successfully registered as broadcaster");
+        updateBroadcasterStatus("Connected", "enabled");
+        isBroadcasterConnected = true;
+      });
+
+      broadcasterSocket.on("disconnect", () => {
+        console.log("Broadcaster disconnected");
+        updateBroadcasterStatus("Disconnected", "disabled");
+        isBroadcasterConnected = false;
+      });
+
+      broadcasterSocket.on("connect_error", (error) => {
+        console.error("Connection error:", error);
+        updateBroadcasterStatus("Connection Error", "error");
+        isBroadcasterConnected = false;
+      });
+
+      broadcasterSocket.on("reconnecting", (attemptNumber) => {
+        console.log(`Attempting to reconnect... (${attemptNumber})`);
+        updateBroadcasterStatus(`Reconnecting (${attemptNumber})`, "disabled");
+      });
+
+      broadcasterSocket.on("reconnect_failed", () => {
+        console.error("Failed to reconnect after all attempts");
+        updateBroadcasterStatus("Reconnection Failed", "error");
+      });
+
+      function updateBroadcasterStatus(text, className) {
+        const statusElement = document.getElementById("broadcaster-status");
+        statusElement.textContent = text;
+        statusElement.className = `status ${className}`;
+      }
+
+      function sendMessage() {
         const messageInput = document.getElementById("messageInput");
         const message = messageInput.value.trim();
 
-        if (message) {
-          try {
-            const response = await fetch("/common-message", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ message }),
-            });
+        if (!message) {
+          return;
+        }
 
-            if (!response.ok) {
-              throw new Error("Failed to send message");
-            }
+        if (!isBroadcasterConnected) {
+          alert("Cannot send message: Broadcaster is not connected");
+          return;
+        }
 
-            messageInput.value = "";
-            console.log("Message sent successfully");
-          } catch (error) {
-            console.error("Error sending message:", error);
-          }
+        try {
+          broadcasterSocket.emit("message", { 
+            text: message, 
+            type: "broadcast",
+            timestamp: new Date().toISOString()
+          });
+          messageInput.value = "";
+          console.log("Broadcast message sent");
+        } catch (error) {
+          console.error("Error sending message:", error);
+          alert("Failed to send message. Please try again.");
         }
       }
 
