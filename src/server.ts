@@ -1,4 +1,4 @@
-import "dotenv";
+import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
@@ -12,7 +12,6 @@ const httpServer = createServer(app);
 // Environment variables
 const PORT = process.env.PORT || 3000;
 const redisHost = process.env.REDIS_HOST;
-console.log(redisHost);
 const redisPort = process.env.REDIS_PORT || 6379;
 const useRedisAdapter = process.env.USE_REDIS_ADAPTER === "true";
 const pubClient = new Redis({ host: redisHost, port: Number(redisPort) });
